@@ -616,7 +616,7 @@ mod test {
             .into();
         let id = email.message_id().to_string();
         assert_eq!(
-            email.message_to_string().unwrap(),
+            email.message_as_str().unwrap(),
             format!(
                 "Date: {}\r\nSubject: Invitation\r\nSender: \
                  <dieter@example.com>\r\nTo: <anna@example.com>\r\nFrom: \
@@ -651,7 +651,7 @@ mod test {
             .into();
         let id = email.message_id().to_string();
         assert_eq!(
-            email.message_to_string().unwrap(),
+            email.message_as_str().unwrap(),
             format!(
                 "Date: {}\r\nSubject: Hello\r\nX-test: value\r\nSender: \
                  <sender@localhost>\r\nTo: <user@localhost>\r\nFrom: \
@@ -687,7 +687,7 @@ mod test {
             .unwrap()
             .into();
         assert_eq!(
-            email.message_to_string().unwrap(),
+            email.message_as_str().unwrap(),
             format!(
                 "Date: {}\r\nSubject: Hello\r\nX-test: value\r\nMessage-ID: \
                  my-shiny-id\r\nSender: <sender@localhost>\r\nTo: <user@localhost>\r\nFrom: \

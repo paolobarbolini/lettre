@@ -1,19 +1,16 @@
 //! SMTP client
 
 use crate::smtp::authentication::{Credentials, Mechanism};
-use crate::smtp::client::net::ClientTlsParameters;
-use crate::smtp::client::net::{Connector, NetworkStream, Timeout};
+use crate::smtp::client::net::{ClientTlsParameters, Connector, NetworkStream, Timeout};
 use crate::smtp::commands::*;
 use crate::smtp::error::{Error, SmtpResult};
 use crate::smtp::response::Response;
 use bufstream::BufStream;
 use log::debug;
 #[cfg(feature = "serde")]
-use std::fmt::Debug;
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::net::ToSocketAddrs;
-use std::string::String;
 use std::time::Duration;
 
 pub mod mock;
@@ -195,7 +192,7 @@ impl<S: Connector + Write + Read + Timeout> InnerClient<S> {
     }
 
     /// Sends the message content
-    pub fn message(&mut self, message: Box<dyn Read>) -> SmtpResult {
+    pub fn message(&mut self, message: &mut dyn Read) -> SmtpResult {
         let mut out_buf: Vec<u8> = vec![];
         let mut codec = ClientCodec::new();
 

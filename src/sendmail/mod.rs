@@ -7,7 +7,6 @@ use crate::Transport;
 use log::info;
 use std::convert::AsRef;
 use std::io::prelude::*;
-use std::io::Read;
 use std::process::{Command, Stdio};
 
 pub mod error;
@@ -53,14 +52,7 @@ impl<'a> Transport<'a> for SendmailTransport {
             .stdout(Stdio::piped())
             .spawn()?;
 
-        let mut message_content = String::new();
-        let _ = email.message().read_to_string(&mut message_content);
-
-        process
-            .stdin
-            .as_mut()
-            .unwrap()
-            .write_all(message_content.as_bytes())?;
+        process.stdin.as_mut().unwrap().write_all(email.message())?;
 
         info!("Wrote {} message to stdin", message_id);
 

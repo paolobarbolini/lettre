@@ -4,9 +4,7 @@ mod test {
     use lettre::file::FileTransport;
     use lettre::{Email, EmailAddress, Envelope, Transport};
     use std::env::temp_dir;
-    use std::fs::remove_file;
-    use std::fs::File;
-    use std::io::Read;
+    use std::fs::{self, remove_file};
 
     #[test]
     fn file_transport() {
@@ -26,15 +24,12 @@ mod test {
         assert!(result.is_ok());
 
         let file = format!("{}/{}.json", temp_dir().to_str().unwrap(), message_id);
-        let mut f = File::open(file.clone()).unwrap();
-        let mut buffer = String::new();
-        let _ = f.read_to_string(&mut buffer);
+        let contents = fs::read_to_string(&file).unwrap();
+        remove_file(file).unwrap();
 
         assert_eq!(
-            buffer,
-            "{\"envelope\":{\"forward_path\":[\"root@localhost\"],\"reverse_path\":\"user@localhost\"},\"message_id\":\"id\",\"message\":[72,101,108,108,111,32,195,159,226,152,186,32,101,120,97,109,112,108,101]}"
+            contents,
+            "{\"envelope\":{\"forward_path\":[\"root@localhost\"],\"reverse_path\":\"user@localhost\"},\"message_id\":\"id\",\"message\":\"Hello ß☺ example\"}"
         );
-
-        remove_file(file).unwrap();
     }
 }

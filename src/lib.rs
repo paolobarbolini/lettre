@@ -39,12 +39,12 @@ pub use crate::smtp::r2d2::SmtpConnectionManager;
 #[cfg(feature = "smtp-transport")]
 pub use crate::smtp::{ClientSecurity, SmtpClient, SmtpTransport};
 use fast_chemail::is_valid_email;
+#[cfg(feature = "serde")]
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 use std::ffi::OsStr;
 use std::fmt::{self, Display, Formatter};
-use std::io;
-use std::io::Cursor;
-use std::io::Read;
-use std::str::FromStr;
+use std::io::{self, Read};
+use std::str::{FromStr, Utf8Error};
 
 /// Email address
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -131,25 +131,12 @@ impl Envelope {
     }
 }
 
-pub enum Message {
-    Reader(Box<dyn Read + Send>),
-    Bytes(Cursor<Vec<u8>>),
-}
-
-impl Read for Message {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        match *self {
-            Message::Reader(ref mut rdr) => rdr.read(buf),
-            Message::Bytes(ref mut rdr) => rdr.read(buf),
-        }
-    }
-}
-
 /// Sendable email structure
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Email {
     envelope: Envelope,
     message_id: String,
-    message: Message,
+    message: Vec<u8>,
 }
 
 impl Email {
@@ -163,20 +150,23 @@ impl Email {
         Email {
             envelope,
             message_id,
-            message: Message::Bytes(Cursor::new(message)),
+            message,
         }
     }
 
     pub fn new_with_reader(
         envelope: Envelope,
         message_id: String,
-        message: Box<dyn Read + Send>,
-    ) -> Email {
-        Email {
+        message: &mut dyn Read,
+    ) -> Result<Email, io::Error> {
+        let mut buf = Vec::new();
+        message.read_to_end(&mut buf)?;
+
+        Ok(Email {
             envelope,
             message_id,
-            message: Message::Reader(message),
-        }
+            message: buf,
+        })
     }
 
     pub fn envelope(&self) -> &Envelope {
@@ -187,14 +177,26 @@ impl Email {
         &self.message_id
     }
 
-    pub fn message(self) -> Message {
-        self.message
+    pub fn message(&self) -> &[u8] {
+        self.message.as_slice()
     }
 
-    pub fn message_to_string(mut self) -> Result<String, io::Error> {
-        let mut message_content = String::new();
-        self.message.read_to_string(&mut message_content)?;
-        Ok(message_content)
+    pub fn message_as_str(&self) -> Result<&str, Utf8Error> {
+        std::str::from_utf8(self.message())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl Serialize for Email {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("Email", 3)?;
+        state.serialize_field("envelope", &self.envelope.clone())?;
+        state.serialize_field("message_id", &self.message_id)?;
+        state.serialize_field("message", self.message_as_str().unwrap())?;
+        state.end()
     }
 }
 

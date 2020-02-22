@@ -431,7 +431,7 @@ impl<'a> Transport<'a> for SmtpTransport {
     fn send<E: Into<Email>>(&mut self, email: E) -> SmtpResult {
         let email = email.into();
 
-        let message_id = email.message_id().to_string();
+        let message_id = email.message_id();
 
         if !self.client.is_connected() {
             self.connect()?;
@@ -492,7 +492,7 @@ impl<'a> Transport<'a> for SmtpTransport {
         try_smtp!(self.client.command(DataCommand), self);
 
         // Message content
-        let result = self.client.message(Box::new(email.message()));
+        let result = self.client.message(&mut email.message());
 
         if let Ok(ref result) = result {
             // Increment the connection reuse counter
