@@ -10,10 +10,10 @@ use bufstream::BufStream;
 use log::debug;
 #[cfg(feature = "serde")]
 use std::fmt::Debug;
-use std::fmt::Display;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::net::ToSocketAddrs;
 use std::string::String;
+use std::string::ToString;
 use std::time::Duration;
 
 pub mod mock;
@@ -225,7 +225,7 @@ impl<S: Connector + Write + Read + Timeout> InnerClient<S> {
     }
 
     /// Sends an SMTP command
-    pub fn command<C: Display>(&mut self, command: C) -> SmtpResult {
+    pub fn command<C: ToString>(&mut self, command: C) -> SmtpResult {
         self.write(command.to_string().as_bytes())?;
         self.read_response()
     }
