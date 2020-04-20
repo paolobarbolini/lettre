@@ -2,7 +2,7 @@ use crate::message::{
     encoder::codec,
     header::{ContentTransferEncoding, ContentType, Header, Headers},
 };
-use bytes::{Bytes, IntoBuf};
+use bytes::Bytes;
 use mime::Mime;
 use std::{
     fmt::{Display, Error as FmtError, Formatter, Result as FmtResult},
@@ -177,10 +177,10 @@ where
         self.headers.fmt(f)?;
         "\r\n".fmt(f)?;
 
-        let body = self.body.as_ref();
+        let mut body = self.body.as_ref().as_bytes();
         let mut encoder = codec(self.encoding());
         let result = encoder
-            .encode_all(&body.into_buf())
+            .encode_all(&mut body)
             .map_err(|_| FmtError::default())?;
         let body = from_utf8(&result).map_err(|_| FmtError::default())?;
 
