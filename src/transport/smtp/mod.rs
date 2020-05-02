@@ -27,6 +27,7 @@ use native_tls::{Protocol, TlsConnector};
 use r2d2::Pool;
 #[cfg(feature = "rustls")]
 use rustls::ClientConfig;
+#[cfg(feature = "r2d2")]
 use std::ops::DerefMut;
 use std::time::Duration;
 #[cfg(feature = "rustls")]
@@ -151,6 +152,7 @@ impl SmtpTransport {
         // Pool with default configuration
         // FIXME avoid clone
         let tpool = new.clone();
+        #[cfg(feature = "r2d2")]
         let new = new.pool(Pool::new(tpool)?);
         Ok(new)
     }
