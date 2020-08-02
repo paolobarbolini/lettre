@@ -112,13 +112,9 @@ impl FromStr for Address {
     type Err = AddressError;
 
     fn from_str(val: &str) -> Result<Self, AddressError> {
-        if val.is_empty() || !val.contains('@') {
-            return Err(AddressError::MissingParts);
-        }
-
-        let parts: Vec<&str> = val.rsplitn(2, '@').collect();
-        let user = parts[1];
-        let domain = parts[0];
+        let mut parts = val.rsplitn(2, '@');
+        let domain = parts.next().ok_or(AddressError::MissingParts)?;
+        let user = parts.next().ok_or(AddressError::MissingParts)?;
 
         Address::check_user(user)
             .and_then(|_| Address::check_domain(domain))
