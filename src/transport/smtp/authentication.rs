@@ -7,25 +7,6 @@ use std::fmt::{self, Display, Formatter};
 /// Trying LOGIN last as it is deprecated.
 pub const DEFAULT_MECHANISMS: &[Mechanism] = &[Mechanism::Plain, Mechanism::Login];
 
-/// Convertible to user credentials
-pub trait IntoCredentials {
-    /// Converts to a `Credentials` struct
-    fn into_credentials(self) -> Credentials;
-}
-
-impl IntoCredentials for Credentials {
-    fn into_credentials(self) -> Credentials {
-        self
-    }
-}
-
-impl<S: Into<String>, T: Into<String>> IntoCredentials for (S, T) {
-    fn into_credentials(self) -> Credentials {
-        let (username, password) = self;
-        Credentials::new(username.into(), password.into())
-    }
-}
-
 /// Contains user credentials
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
