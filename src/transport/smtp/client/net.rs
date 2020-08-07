@@ -1,4 +1,5 @@
 use std::io::{self, Read, Write};
+use std::mem;
 use std::net::{Ipv4Addr, Shutdown, SocketAddr, SocketAddrV4, TcpStream, ToSocketAddrs};
 #[cfg(feature = "rustls-tls")]
 use std::sync::Arc;
@@ -103,14 +104,22 @@ impl NetworkStream {
     #[allow(unused_variables)]
     pub fn upgrade_tls(&mut self, tls_parameters: &TlsParameters) -> Result<(), Error> {
         match self.inner {
-            InnerNetworkStream::Tcp(ref mut stream) => {
+            InnerNetworkStream::Tcp(_) => {
+                let stream =
+                    mem::replace(&mut self.inner, InnerNetworkStream::Mock(MockStream::new()));
+                let stream = match stream {
+                    InnerNetworkStream::Tcp(stream) => stream,
+                    _ => unreachable!(),
+                };
+
                 #[cfg(any(feature = "native-tls", feature = "rustls-tls"))]
                 match &tls_parameters.connector {
                     #[cfg(feature = "native-tls")]
                     InnerTlsParameters::NativeTls(connector) => {
                         let stream = connector
-                            .connect(tls_parameters.domain(), stream.try_clone().unwrap())
+                            .connect(tls_parameters.domain(), stream)
                             .map_err(|err| Error::Io(io::Error::new(io::ErrorKind::Other, err)))?;
+
                         *self = NetworkStream::new(InnerNetworkStream::NativeTls(stream));
                     }
                     #[cfg(feature = "rustls-tls")]
@@ -120,7 +129,7 @@ impl NetworkStream {
                         let domain = DNSNameRef::try_from_ascii_str(tls_parameters.domain())?;
                         let stream = StreamOwned::new(
                             ClientSession::new(&Arc::new(connector.clone()), domain),
-                            stream.try_clone().unwrap(),
+                            stream,
                         );
 
                         *self = NetworkStream::new(InnerNetworkStream::RustlsTls(Box::new(stream)));
