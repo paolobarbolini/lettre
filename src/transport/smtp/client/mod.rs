@@ -11,6 +11,8 @@ pub use self::mock::MockStream;
 pub(super) use self::tls::InnerTlsParameters;
 pub use self::tls::{Tls, TlsParameters};
 
+#[cfg(feature = "tokio02")]
+mod async_net;
 mod connection;
 mod mock;
 mod net;

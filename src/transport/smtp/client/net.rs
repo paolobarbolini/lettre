@@ -35,7 +35,7 @@ enum InnerNetworkStream {
 }
 
 impl NetworkStream {
-    pub(self) fn new(inner: InnerNetworkStream) -> Self {
+    fn new(inner: InnerNetworkStream) -> Self {
         NetworkStream { inner }
     }
 
