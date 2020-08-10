@@ -125,9 +125,9 @@ impl AsyncNetworkStream {
     #[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
     async fn upgrade_tokio02_tls(
         tcp_stream: TcpStream,
-        tls_parameters: TlsParameters,
+        mut tls_parameters: TlsParameters,
     ) -> Result<InnerAsyncNetworkStream, Error> {
-        let domain = tls_parameters.domain().to_string();
+        let domain = std::mem::take(&mut tls_parameters.domain);
 
         match tls_parameters.connector {
             #[cfg(feature = "native-tls")]

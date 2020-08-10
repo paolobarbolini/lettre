@@ -35,7 +35,7 @@ pub enum Tls {
 pub struct TlsParameters {
     pub(crate) connector: InnerTlsParameters,
     /// The domain name which is expected in the TLS certificate from the server
-    domain: String,
+    pub(super) domain: String,
 }
 
 #[derive(Clone)]
