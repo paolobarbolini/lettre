@@ -3,10 +3,7 @@
 use tokio02_crate as tokio;
 
 use lettre::transport::smtp::authentication::Credentials;
-use lettre::transport::smtp::authentication::Mechanism;
-use lettre::transport::smtp::client::{AsyncSmtpConnection, TlsParameters};
-use lettre::transport::smtp::extension::ClientId;
-use lettre::Message;
+use lettre::{AsyncSmtpTransport, Message, Tokio02Transport};
 
 // remove before committing
 const DEST_ADDR: &str = "";
@@ -22,18 +19,9 @@ async fn main() {
         .unwrap();
 
     let creds = Credentials::new("paolo@paolo565.org".to_string(), PASS.to_string());
-
-    println!("1");
-    let tls_parameters = TlsParameters::new("smtp.fastmail.com".to_string()).unwrap();
-    println!("3");
-    let mut conn = AsyncSmtpConnection::connect("smtp.fastmail.com:465", &ClientId::hostname(), Some(tls_parameters))
-        .await
-        .unwrap();
-    println!("4");
-    conn.auth(&[Mechanism::Plain], &creds).await.unwrap();
-    println!("5");
-    conn.send(email.envelope(), &email.formatted())
-        .await
-        .unwrap();
-    println!("6");
+    let transport = AsyncSmtpTransport::relay("smtp.fastmail.com")
+        .unwrap()
+        .credentials(creds)
+        .build();
+    transport.send(email).await.unwrap();
 }
