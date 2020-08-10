@@ -39,7 +39,7 @@ impl AsyncSmtpTransport {
     /// to validate TLS certificates.
     #[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
     pub fn relay(relay: &str) -> Result<AsyncSmtpTransportBuilder, Error> {
-        let tls_parameters = TlsParameters::new(relay.into())?;
+        let tls_parameters = TlsParameters::new_tokio02(relay.into())?;
 
         Ok(Self::builder_dangerous(relay)
             .port(SUBMISSIONS_PORT)

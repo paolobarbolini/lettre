@@ -58,6 +58,15 @@ impl TlsParameters {
         return Self::new_rustls(domain);
     }
 
+    #[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
+    pub(crate) fn new_tokio02(domain: String) -> Result<Self, Error> {
+        #[cfg(feature = "tokio02-native-tls")]
+        return Self::new_native(domain);
+
+        #[cfg(not(feature = "tokio02-native-tls"))]
+        return Self::new_rustls(domain);
+    }
+
     /// Creates a new `TlsParameters` using native-tls
     #[cfg(feature = "native-tls")]
     pub fn new_native(domain: String) -> Result<Self, Error> {
