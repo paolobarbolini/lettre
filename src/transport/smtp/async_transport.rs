@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use async_trait::async_trait;
 
 use super::client::AsyncSmtpConnection;
@@ -59,7 +57,6 @@ impl AsyncSmtpTransport {
     ///
     /// * No authentication
     /// * No TLS
-    /// * A 60 seconds timeout for smtp commands
     /// * Port 25
     ///
     /// Consider using [`SmtpTransport::relay`] instead, if possible.
@@ -97,12 +94,6 @@ impl AsyncSmtpTransportBuilder {
         self
     }
 
-    /// Set the timeout duration
-    pub fn timeout(mut self, timeout: Option<Duration>) -> Self {
-        self.info.timeout = timeout;
-        self
-    }
-
     /// Set the port to use
     pub fn port(mut self, port: u16) -> Self {
         self.info.port = port;
@@ -110,7 +101,7 @@ impl AsyncSmtpTransportBuilder {
     }
 
     /// Set the TLS settings to use
-    #[cfg(any(feature = "native-tls", feature = "rustls-tls"))]
+    #[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
     pub fn tls(mut self, tls: Tls) -> Self {
         self.info.tls = tls;
         self
@@ -141,7 +132,7 @@ impl AsyncSmtpClient {
     pub async fn connection(&self) -> Result<AsyncSmtpConnection, Error> {
         #[allow(clippy::match_single_binding)]
         let tls = match self.info.tls {
-            #[cfg(any(feature = "native-tls", feature = "rustls-tls"))]
+            #[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
             Tls::Wrapper(ref tls_parameters) => Some(tls_parameters.clone()),
             _ => None,
         };
@@ -149,7 +140,7 @@ impl AsyncSmtpClient {
         let addr = (self.info.server.as_ref(), self.info.port);
         let mut conn = AsyncSmtpConnection::connect(addr, &self.info.hello_name, tls).await?;
 
-        #[cfg(any(feature = "native-tls", feature = "rustls-tls"))]
+        #[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
         match self.info.tls {
             Tls::Opportunistic(ref tls_parameters) => {
                 if conn.can_starttls() {
