@@ -50,6 +50,8 @@ pub use crate::transport::file::FileTransport;
 pub use crate::transport::sendmail::SendmailTransport;
 #[cfg(all(feature = "smtp-transport", feature = "connection-pool"))]
 pub use crate::transport::smtp::r2d2::SmtpConnectionManager;
+#[cfg(all(feature = "smtp-transport", feature = "tokio02"))]
+pub use crate::transport::smtp::AsyncSmtpTransport;
 #[cfg(feature = "smtp-transport")]
 pub use crate::transport::smtp::SmtpTransport;
 pub use crate::{address::Address, transport::stub::StubTransport};
