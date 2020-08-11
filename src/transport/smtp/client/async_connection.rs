@@ -2,7 +2,6 @@ use std::io;
 use std::{fmt::Display, string::String};
 
 use futures_util::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio02_crate::net::ToSocketAddrs;
 
 #[cfg(feature = "log")]
 use log::debug;
@@ -53,12 +52,12 @@ impl AsyncSmtpConnection {
     /// Connects to the configured server
     ///
     /// Sends EHLO and parses server information
-    pub async fn connect<A: ToSocketAddrs>(
-        server: A,
+    pub async fn connect_tokio02(
+        server: (&str, u16),
         hello_name: &ClientId,
         tls_parameters: Option<TlsParameters>,
     ) -> Result<AsyncSmtpConnection, Error> {
-        let stream = AsyncNetworkStream::connect(server, tls_parameters).await?;
+        let stream = AsyncNetworkStream::connect_tokio02(server, tls_parameters).await?;
         let stream = BufReader::new(stream);
         let mut conn = AsyncSmtpConnection {
             stream,

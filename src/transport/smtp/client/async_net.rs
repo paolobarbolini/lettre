@@ -5,8 +5,10 @@ use std::sync::Arc;
 use std::task::{Context, Poll};
 
 use futures_io::{Error as IoError, ErrorKind, Result as IoResult};
+#[cfg(feature = "tokio02")]
 use tokio02_crate::io::{AsyncRead, AsyncWrite};
-use tokio02_crate::net::{TcpStream, ToSocketAddrs};
+#[cfg(feature = "tokio02")]
+use tokio02_crate::net::TcpStream;
 
 #[cfg(feature = "tokio02-native-tls")]
 use tokio02_native_tls_crate::TlsStream;
@@ -27,6 +29,7 @@ pub struct AsyncNetworkStream {
 /// Represents the different types of underlying network streams
 enum InnerAsyncNetworkStream {
     /// Plain TCP stream
+    #[cfg(feature = "tokio02")]
     Tokio02Tcp(TcpStream),
     /// Encrypted TCP stream
     #[cfg(feature = "tokio02-native-tls")]
@@ -50,6 +53,7 @@ impl AsyncNetworkStream {
     /// Returns peer's address
     pub fn peer_addr(&self) -> IoResult<SocketAddr> {
         match self.inner {
+            #[cfg(feature = "tokio02")]
             InnerAsyncNetworkStream::Tokio02Tcp(ref s) => s.peer_addr(),
             #[cfg(feature = "tokio02-native-tls")]
             InnerAsyncNetworkStream::Tokio02NativeTls(ref s) => {
@@ -70,6 +74,7 @@ impl AsyncNetworkStream {
     /// Shutdowns the connection
     pub fn shutdown(&self, how: Shutdown) -> IoResult<()> {
         match self.inner {
+            #[cfg(feature = "tokio02")]
             InnerAsyncNetworkStream::Tokio02Tcp(ref s) => s.shutdown(how),
             #[cfg(feature = "tokio02-native-tls")]
             InnerAsyncNetworkStream::Tokio02NativeTls(ref s) => {
@@ -84,8 +89,9 @@ impl AsyncNetworkStream {
         }
     }
 
-    pub async fn connect<T: ToSocketAddrs>(
-        server: T,
+    #[cfg(feature = "tokio02")]
+    pub async fn connect_tokio02(
+        server: (&str, u16),
         tls_parameters: Option<TlsParameters>,
     ) -> Result<AsyncNetworkStream, Error> {
         let tcp_stream = TcpStream::connect(server).await?;
@@ -166,6 +172,7 @@ impl AsyncNetworkStream {
 
     pub fn is_encrypted(&self) -> bool {
         match self.inner {
+            #[cfg(feature = "tokio02")]
             InnerAsyncNetworkStream::Tokio02Tcp(_) => false,
             #[cfg(feature = "tokio02-native-tls")]
             InnerAsyncNetworkStream::Tokio02NativeTls(_) => true,
@@ -183,6 +190,7 @@ impl futures_io::AsyncRead for AsyncNetworkStream {
         buf: &mut [u8],
     ) -> Poll<IoResult<usize>> {
         match self.inner {
+            #[cfg(feature = "tokio02")]
             InnerAsyncNetworkStream::Tokio02Tcp(ref mut s) => Pin::new(s).poll_read(cx, buf),
             #[cfg(feature = "tokio02-native-tls")]
             InnerAsyncNetworkStream::Tokio02NativeTls(ref mut s) => Pin::new(s).poll_read(cx, buf),
@@ -199,6 +207,7 @@ impl futures_io::AsyncRead for AsyncNetworkStream {
 impl futures_io::AsyncWrite for AsyncNetworkStream {
     fn poll_write(mut self: Pin<&mut Self>, cx: &mut Context, buf: &[u8]) -> Poll<IoResult<usize>> {
         match self.inner {
+            #[cfg(feature = "tokio02")]
             InnerAsyncNetworkStream::Tokio02Tcp(ref mut s) => Pin::new(s).poll_write(cx, buf),
             #[cfg(feature = "tokio02-native-tls")]
             InnerAsyncNetworkStream::Tokio02NativeTls(ref mut s) => Pin::new(s).poll_write(cx, buf),
@@ -213,6 +222,7 @@ impl futures_io::AsyncWrite for AsyncNetworkStream {
 
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<IoResult<()>> {
         match self.inner {
+            #[cfg(feature = "tokio02")]
             InnerAsyncNetworkStream::Tokio02Tcp(ref mut s) => Pin::new(s).poll_flush(cx),
             #[cfg(feature = "tokio02-native-tls")]
             InnerAsyncNetworkStream::Tokio02NativeTls(ref mut s) => Pin::new(s).poll_flush(cx),

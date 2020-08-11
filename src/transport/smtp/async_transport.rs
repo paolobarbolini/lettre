@@ -138,7 +138,8 @@ impl AsyncSmtpClient {
         };
 
         let addr = (self.info.server.as_ref(), self.info.port);
-        let mut conn = AsyncSmtpConnection::connect(addr, &self.info.hello_name, tls).await?;
+        let mut conn =
+            AsyncSmtpConnection::connect_tokio02(addr, &self.info.hello_name, tls).await?;
 
         #[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
         match self.info.tls {
