@@ -145,7 +145,7 @@ where
             _ => None,
         };
 
-        let mut conn = AsyncSmtpConnection::connect_tokio02(
+        let mut conn = C::connect(
             self.info.server.as_ref(),
             self.info.port,
             &self.info.hello_name,
@@ -179,7 +179,6 @@ where
 #[async_trait]
 pub trait AsyncSmtpConnector: Default + private::Sealed {
     async fn connect(
-        &self,
         hostname: &str,
         port: u16,
         hello_name: &ClientId,
@@ -195,7 +194,6 @@ pub struct Tokio02Connector;
 #[cfg(feature = "tokio02")]
 impl AsyncSmtpConnector for Tokio02Connector {
     async fn connect(
-        &self,
         hostname: &str,
         port: u16,
         hello_name: &ClientId,
