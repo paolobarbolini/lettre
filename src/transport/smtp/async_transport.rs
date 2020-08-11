@@ -59,7 +59,7 @@ impl AsyncSmtpTransport {
     /// * No TLS
     /// * Port 25
     ///
-    /// Consider using [`SmtpTransport::relay`] instead, if possible.
+    /// Consider using [`AsyncSmtpTransport::relay`] instead, if possible.
     pub fn builder_dangerous<T: Into<String>>(server: T) -> AsyncSmtpTransportBuilder {
         let mut new = SmtpInfo::default();
         new.server = server.into();
@@ -74,7 +74,7 @@ pub struct AsyncSmtpTransportBuilder {
     info: SmtpInfo,
 }
 
-/// Builder for the SMTP `SmtpTransport`
+/// Builder for the SMTP `AsyncSmtpTransport`
 impl AsyncSmtpTransportBuilder {
     /// Set the name used during EHLO
     pub fn hello_name(mut self, name: ClientId) -> Self {
