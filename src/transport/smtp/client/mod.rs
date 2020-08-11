@@ -4,9 +4,9 @@
 use std::fmt::Debug;
 
 #[cfg(feature = "tokio02")]
-pub use self::async_connection::AsyncSmtpConnection;
+pub(crate) use self::async_connection::AsyncSmtpConnection;
 #[cfg(feature = "tokio02")]
-pub use self::async_net::AsyncNetworkStream;
+pub(crate) use self::async_net::AsyncNetworkStream;
 pub use self::connection::SmtpConnection;
 pub use self::mock::MockStream;
 use self::net::NetworkStream;
