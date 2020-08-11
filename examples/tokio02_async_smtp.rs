@@ -6,7 +6,7 @@ use tokio02_crate as tokio;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, Message, Tokio02Connector, Tokio02Transport};
 
-#[tokio02_crate::main]
+#[tokio::main]
 async fn main() {
     let email = Message::builder()
         .from("NoBody <nobody@domain.tld>".parse().unwrap())
