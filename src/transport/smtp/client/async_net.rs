@@ -27,6 +27,7 @@ pub struct AsyncNetworkStream {
 }
 
 /// Represents the different types of underlying network streams
+#[allow(dead_code)]
 enum InnerAsyncNetworkStream {
     /// Plain TCP stream
     #[cfg(feature = "tokio02")]
@@ -107,7 +108,7 @@ impl AsyncNetworkStream {
     pub async fn upgrade_tls(&mut self, tls_parameters: TlsParameters) -> Result<(), Error> {
         match &self.inner {
             #[cfg(not(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls")))]
-            InnerAsyncNetworkStream::Tokio02Tcp(stream) => {
+            InnerAsyncNetworkStream::Tokio02Tcp(_) => {
                 let _ = tls_parameters;
                 panic!("Trying to upgrade an AsyncNetworkStream without having enabled either the tokio02-native-tls or the tokio02-rustls-tls feature");
             }

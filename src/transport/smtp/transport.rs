@@ -3,10 +3,9 @@ use std::time::Duration;
 #[cfg(feature = "r2d2")]
 use r2d2::{Builder, Pool};
 
-use super::{
-    ClientId, Credentials, Error, Mechanism, Response, SmtpConnection, SmtpInfo, Tls,
-    TlsParameters, SUBMISSIONS_PORT,
-};
+use super::{ClientId, Credentials, Error, Mechanism, Response, SmtpConnection, SmtpInfo};
+#[cfg(any(feature = "native-tls", feature = "rustls-tls"))]
+use super::{Tls, TlsParameters, SUBMISSIONS_PORT};
 use crate::{Envelope, Transport};
 
 #[allow(missing_debug_implementations)]
