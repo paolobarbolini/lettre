@@ -91,10 +91,11 @@ impl AsyncNetworkStream {
 
     #[cfg(feature = "tokio02")]
     pub async fn connect_tokio02(
-        server: (&str, u16),
+        hostname: &str,
+        port: u16,
         tls_parameters: Option<TlsParameters>,
     ) -> Result<AsyncNetworkStream, Error> {
-        let tcp_stream = TcpStream::connect(server).await?;
+        let tcp_stream = TcpStream::connect((hostname, port)).await?;
 
         let mut stream = AsyncNetworkStream::new(InnerAsyncNetworkStream::Tokio02Tcp(tcp_stream));
         if let Some(tls_parameters) = tls_parameters {

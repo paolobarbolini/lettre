@@ -9,13 +9,13 @@ use crate::{Envelope, Tokio02Transport};
 
 #[allow(missing_debug_implementations)]
 #[derive(Clone)]
-pub struct AsyncSmtpTransport {
+pub struct AsyncSmtpTransport<C> {
     // TODO: pool
-    inner: AsyncSmtpClient,
+    inner: AsyncSmtpClient<C>,
 }
 
 #[async_trait]
-impl Tokio02Transport for AsyncSmtpTransport {
+impl Tokio02Transport for AsyncSmtpTransport<Tokio02Connector> {
     type Ok = Response;
     type Error = Error;
 
@@ -31,7 +31,10 @@ impl Tokio02Transport for AsyncSmtpTransport {
     }
 }
 
-impl AsyncSmtpTransport {
+impl<C> AsyncSmtpTransport<C>
+where
+    C: AsyncSmtpConnector,
+{
     /// Simple and secure transport, should be used when possible.
     /// Creates an encrypted transport over submissions port, using the provided domain
     /// to validate TLS certificates.
@@ -47,7 +50,7 @@ impl AsyncSmtpTransport {
     /// Creates a new local SMTP client to port 25
     ///
     /// Shortcut for local unencrypted relay (typical local email daemon that will handle relaying)
-    pub fn unencrypted_localhost() -> AsyncSmtpTransport {
+    pub fn unencrypted_localhost() -> AsyncSmtpTransport<C> {
         Self::builder_dangerous("localhost").build()
     }
 
@@ -107,25 +110,31 @@ impl AsyncSmtpTransportBuilder {
         self
     }
 
-    /// Build the client
-    fn build_client(self) -> AsyncSmtpClient {
-        AsyncSmtpClient { info: self.info }
-    }
-
     /// Build the transport (with default pool if enabled)
-    pub fn build(self) -> AsyncSmtpTransport {
-        let client = self.build_client();
+    pub fn build<C>(self) -> AsyncSmtpTransport<C>
+    where
+        C: AsyncSmtpConnector,
+    {
+        let connector = Default::default();
+        let client = AsyncSmtpClient {
+            connector,
+            info: self.info,
+        };
         AsyncSmtpTransport { inner: client }
     }
 }
 
 /// Build client
 #[derive(Clone)]
-pub struct AsyncSmtpClient {
+pub struct AsyncSmtpClient<C> {
+    connector: C,
     info: SmtpInfo,
 }
 
-impl AsyncSmtpClient {
+impl<C> AsyncSmtpClient<C>
+where
+    C: AsyncSmtpConnector,
+{
     /// Creates a new connection directly usable to send emails
     ///
     /// Handles encryption and authentication
@@ -137,9 +146,13 @@ impl AsyncSmtpClient {
             _ => None,
         };
 
-        let addr = (self.info.server.as_ref(), self.info.port);
-        let mut conn =
-            AsyncSmtpConnection::connect_tokio02(addr, &self.info.hello_name, tls).await?;
+        let mut conn = AsyncSmtpConnection::connect_tokio02(
+            self.info.server.as_ref(),
+            self.info.port,
+            &self.info.hello_name,
+            tls,
+        )
+        .await?;
 
         #[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
         match self.info.tls {
@@ -162,4 +175,42 @@ impl AsyncSmtpClient {
 
         Ok(conn)
     }
+}
+
+#[async_trait]
+pub trait AsyncSmtpConnector: Default + private::Sealed {
+    async fn connect(
+        &self,
+        hostname: &str,
+        port: u16,
+        hello_name: &ClientId,
+        tls_parameters: Option<TlsParameters>,
+    ) -> Result<AsyncSmtpConnection, Error>;
+}
+
+#[derive(Debug, Copy, Clone, Default)]
+#[cfg(feature = "tokio02")]
+pub struct Tokio02Connector;
+
+#[async_trait]
+#[cfg(feature = "tokio02")]
+impl AsyncSmtpConnector for Tokio02Connector {
+    async fn connect(
+        &self,
+        hostname: &str,
+        port: u16,
+        hello_name: &ClientId,
+        tls_parameters: Option<TlsParameters>,
+    ) -> Result<AsyncSmtpConnection, Error> {
+        AsyncSmtpConnection::connect_tokio02(hostname, port, hello_name, tls_parameters).await
+    }
+}
+
+mod private {
+    use super::*;
+
+    pub trait Sealed {}
+
+    #[cfg(feature = "tokio02")]
+    impl Sealed for Tokio02Connector {}
 }

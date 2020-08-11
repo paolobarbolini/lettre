@@ -53,11 +53,12 @@ impl AsyncSmtpConnection {
     ///
     /// Sends EHLO and parses server information
     pub async fn connect_tokio02(
-        server: (&str, u16),
+        hostname: &str,
+        port: u16,
         hello_name: &ClientId,
         tls_parameters: Option<TlsParameters>,
     ) -> Result<AsyncSmtpConnection, Error> {
-        let stream = AsyncNetworkStream::connect_tokio02(server, tls_parameters).await?;
+        let stream = AsyncNetworkStream::connect_tokio02(hostname, port, tls_parameters).await?;
         let stream = BufReader::new(stream);
         let mut conn = AsyncSmtpConnection {
             stream,
