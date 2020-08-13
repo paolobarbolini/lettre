@@ -1,5 +1,5 @@
+use std::fmt::Display;
 use std::io;
-use std::{fmt::Display, string::String};
 
 use futures_util::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
@@ -59,6 +59,13 @@ impl AsyncSmtpConnection {
         tls_parameters: Option<TlsParameters>,
     ) -> Result<AsyncSmtpConnection, Error> {
         let stream = AsyncNetworkStream::connect_tokio02(hostname, port, tls_parameters).await?;
+        Self::connect_impl(stream, hello_name).await
+    }
+
+    async fn connect_impl(
+        stream: AsyncNetworkStream,
+        hello_name: &ClientId,
+    ) -> Result<AsyncSmtpConnection, Error> {
         let stream = BufReader::new(stream);
         let mut conn = AsyncSmtpConnection {
             stream,
@@ -84,7 +91,7 @@ impl AsyncSmtpConnection {
             mail_options.push(MailParameter::Body(MailBodyParameter::EightBitMime));
         }
         try_smtp!(
-            self.command(Mail::new(envelope.from().cloned(), mail_options,))
+            self.command(Mail::new(envelope.from().cloned(), mail_options))
                 .await,
             self
         );
@@ -179,14 +186,12 @@ impl AsyncSmtpConnection {
         mechanisms: &[Mechanism],
         credentials: &Credentials,
     ) -> Result<Response, Error> {
-        let mechanism = match self.server_info.get_auth_mechanism(mechanisms) {
-            Some(m) => m,
-            None => {
-                return Err(Error::Client(
-                    "No compatible authentication mechanism was found",
-                ))
-            }
-        };
+        let mechanism = self
+            .server_info
+            .get_auth_mechanism(mechanisms)
+            .ok_or(Error::Client(
+                "No compatible authentication mechanism was found",
+            ))?;
 
         // Limit challenges to avoid blocking
         let mut challenges = 10;
@@ -236,10 +241,7 @@ impl AsyncSmtpConnection {
         self.stream.get_mut().flush().await?;
 
         #[cfg(feature = "log")]
-        debug!(
-            "Wrote: {}",
-            escape_crlf(String::from_utf8_lossy(string).as_ref())
-        );
+        debug!("Wrote: {}", escape_crlf(&String::from_utf8_lossy(string)));
         Ok(())
     }
 

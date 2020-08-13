@@ -138,40 +138,17 @@ where
     ///
     /// Handles encryption and authentication
     pub async fn connection(&self) -> Result<AsyncSmtpConnection, Error> {
-        #[allow(clippy::match_single_binding)]
-        let tls = match self.info.tls {
-            #[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
-            Tls::Wrapper(ref tls_parameters) => Some(tls_parameters.clone()),
-            _ => None,
-        };
-
         let mut conn = C::connect(
-            self.info.server.as_ref(),
+            &self.info.server,
             self.info.port,
             &self.info.hello_name,
-            tls,
+            &self.info.tls,
         )
         .await?;
-
-        #[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
-        match self.info.tls {
-            Tls::Opportunistic(ref tls_parameters) => {
-                if conn.can_starttls() {
-                    conn.starttls(tls_parameters.clone(), &self.info.hello_name)
-                        .await?;
-                }
-            }
-            Tls::Required(ref tls_parameters) => {
-                conn.starttls(tls_parameters.clone(), &self.info.hello_name)
-                    .await?;
-            }
-            _ => (),
-        }
 
         if let Some(credentials) = &self.info.credentials {
             conn.auth(&self.info.authentication, &credentials).await?;
         }
-
         Ok(conn)
     }
 }
@@ -182,7 +159,7 @@ pub trait AsyncSmtpConnector: Default + private::Sealed {
         hostname: &str,
         port: u16,
         hello_name: &ClientId,
-        tls_parameters: Option<TlsParameters>,
+        tls: &Tls,
     ) -> Result<AsyncSmtpConnection, Error>;
 }
 
@@ -197,9 +174,32 @@ impl AsyncSmtpConnector for Tokio02Connector {
         hostname: &str,
         port: u16,
         hello_name: &ClientId,
-        tls_parameters: Option<TlsParameters>,
+        tls: &Tls,
     ) -> Result<AsyncSmtpConnection, Error> {
-        AsyncSmtpConnection::connect_tokio02(hostname, port, hello_name, tls_parameters).await
+        #[allow(clippy::match_single_binding)]
+        let tls_parameters = match tls {
+            #[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
+            Tls::Wrapper(ref tls_parameters) => Some(tls_parameters.clone()),
+            _ => None,
+        };
+        let mut conn =
+            AsyncSmtpConnection::connect_tokio02(hostname, port, hello_name, tls_parameters)
+                .await?;
+
+        #[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
+        match tls {
+            Tls::Opportunistic(ref tls_parameters) => {
+                if conn.can_starttls() {
+                    conn.starttls(tls_parameters.clone(), hello_name).await?;
+                }
+            }
+            Tls::Required(ref tls_parameters) => {
+                conn.starttls(tls_parameters.clone(), hello_name).await?;
+            }
+            _ => (),
+        }
+
+        Ok(conn)
     }
 }
 
