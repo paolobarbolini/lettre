@@ -1,9 +1,9 @@
 use async_trait::async_trait;
 
 use super::client::AsyncSmtpConnection;
-use super::{ClientId, Credentials, Error, Mechanism, Response, SmtpInfo, TlsParameters};
-#[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
-use super::{Tls, SUBMISSIONS_PORT};
+#[cfg(feature = "tokio02")]
+use super::Tls;
+use super::{ClientId, Credentials, Error, Mechanism, Response, SmtpInfo};
 use crate::{Envelope, Tokio02Transport};
 
 #[allow(missing_debug_implementations)]
@@ -39,6 +39,8 @@ where
     /// to validate TLS certificates.
     #[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
     pub fn relay(relay: &str) -> Result<AsyncSmtpTransportBuilder, Error> {
+        use super::{TlsParameters, SUBMISSIONS_PORT};
+
         let tls_parameters = TlsParameters::new_tokio02(relay.into())?;
 
         Ok(Self::builder_dangerous(relay)
