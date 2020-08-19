@@ -272,13 +272,10 @@ impl Display for RcptParameter {
 
 #[cfg(test)]
 mod test {
-
-    use super::{ClientId, Extension, ServerInfo};
-    use crate::transport::smtp::{
-        authentication::Mechanism,
-        response::{Category, Code, Detail, Response, Severity},
-    };
     use std::collections::HashSet;
+
+    use super::*;
+    use crate::transport::smtp::response::{Category, Code, Detail, Severity};
 
     #[test]
     fn test_clientid_fmt() {

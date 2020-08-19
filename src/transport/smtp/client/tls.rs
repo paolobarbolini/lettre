@@ -1,5 +1,5 @@
 #[cfg(any(feature = "native-tls", feature = "rustls-tls"))]
-use crate::transport::smtp::error::Error;
+use crate::transport::smtp::Error;
 
 #[cfg(feature = "native-tls")]
 use native_tls::{Protocol, TlsConnector};

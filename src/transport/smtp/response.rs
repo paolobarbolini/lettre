@@ -2,10 +2,8 @@
 //! message
 
 use std::{
-    fmt::{Display, Formatter, Result},
-    result,
+    fmt::{Display, Formatter, Result as FmtResult},
     str::FromStr,
-    string::ToString,
 };
 
 use nom::{
@@ -34,7 +32,7 @@ pub enum Severity {
 }
 
 impl Display for Severity {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{}", *self as u8)
     }
 }
@@ -58,7 +56,7 @@ pub enum Category {
 }
 
 impl Display for Category {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{}", *self as u8)
     }
 }
@@ -90,7 +88,7 @@ pub enum Detail {
 }
 
 impl Display for Detail {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{}", *self as u8)
     }
 }
@@ -108,7 +106,7 @@ pub struct Code {
 }
 
 impl Display for Code {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{}{}{}", self.severity, self.category, self.detail)
     }
 }
@@ -140,7 +138,7 @@ pub struct Response {
 impl FromStr for Response {
     type Err = Error;
 
-    fn from_str(s: &str) -> result::Result<Response, Error> {
+    fn from_str(s: &str) -> Result<Response, Error> {
         parse_response(s).map(|(_, r)| r).map_err(|e| e.into())
     }
 }

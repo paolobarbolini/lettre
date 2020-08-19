@@ -1,6 +1,6 @@
 use r2d2::ManageConnection;
 
-use super::{client::SmtpConnection, Error, SmtpClient};
+use super::{Error, SmtpClient, SmtpConnection};
 
 impl ManageConnection for SmtpClient {
     type Connection = SmtpConnection;

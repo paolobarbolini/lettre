@@ -27,14 +27,15 @@ use std::ffi::OsString;
 use std::io::Write;
 use std::process::{Command, Stdio};
 
+#[cfg(any(feature = "async-std1", feature = "tokio02"))]
+use async_trait::async_trait;
+
 pub use self::error::Error;
 #[cfg(feature = "async-std1")]
 use crate::AsyncStd1Transport;
 #[cfg(feature = "tokio02")]
 use crate::Tokio02Transport;
 use crate::{Envelope, Transport};
-#[cfg(any(feature = "async-std1", feature = "tokio02"))]
-use async_trait::async_trait;
 
 mod error;
 

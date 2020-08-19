@@ -38,6 +38,8 @@
 use std::path::{Path, PathBuf};
 use std::str;
 
+#[cfg(any(feature = "async-std1", feature = "tokio02"))]
+use async_trait::async_trait;
 use uuid::Uuid;
 
 pub use self::error::Error;
@@ -46,8 +48,6 @@ use crate::AsyncStd1Transport;
 #[cfg(feature = "tokio02")]
 use crate::Tokio02Transport;
 use crate::{Envelope, Transport};
-#[cfg(any(feature = "async-std1", feature = "tokio02"))]
-use async_trait::async_trait;
 
 mod error;
 

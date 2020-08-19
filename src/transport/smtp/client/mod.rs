@@ -3,10 +3,9 @@
 #[cfg(feature = "serde")]
 use std::fmt::Debug;
 
-use self::net::NetworkStream;
-
 pub use self::connection::SmtpConnection;
 pub use self::mock::MockStream;
+use self::net::NetworkStream;
 #[cfg(any(feature = "native-tls", feature = "rustls-tls"))]
 pub(super) use self::tls::InnerTlsParameters;
 pub use self::tls::{Tls, TlsParameters};

@@ -290,9 +290,10 @@ impl Auth {
 
 #[cfg(test)]
 mod test {
+    use std::str::FromStr;
+
     use super::*;
     use crate::transport::smtp::extension::MailBodyParameter;
-    use std::str::FromStr;
 
     #[test]
     fn test_display() {

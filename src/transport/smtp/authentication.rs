@@ -109,7 +109,7 @@ impl Mechanism {
 
 #[cfg(test)]
 mod test {
-    use super::{Credentials, Mechanism};
+    use super::*;
 
     #[test]
     fn test_plain() {
