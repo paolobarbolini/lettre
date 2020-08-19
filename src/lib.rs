@@ -35,23 +35,28 @@
 #![allow(clippy::match_like_matches_macro)]
 
 pub use crate::address::{Address, AddressError, Envelope};
-pub use crate::error::Error;
+#[doc(inline)]
 #[cfg(feature = "builder")]
 pub use crate::message::{Mailbox, Mailboxes, Message};
+#[doc(inline)]
 #[cfg(feature = "file-transport")]
 pub use crate::transport::file::FileTransport;
+#[doc(inline)]
 #[cfg(feature = "sendmail-transport")]
 pub use crate::transport::sendmail::SendmailTransport;
+#[doc(inline)]
 #[cfg(feature = "smtp-transport")]
 pub use crate::transport::smtp::SmtpTransport;
+#[doc(inline)]
 #[cfg(feature = "async-std1")]
 pub use crate::transport::AsyncStd1Transport;
+#[doc(inline)]
 #[cfg(feature = "tokio02")]
 pub use crate::transport::Tokio02Transport;
+#[doc(inline)]
 pub use crate::transport::Transport;
 
 mod address;
-mod error;
 #[cfg(feature = "builder")]
 pub mod message;
 pub mod transport;

@@ -6,9 +6,9 @@ use std::fmt::{self, Display, Formatter};
 use log::debug;
 
 use super::authentication::{Credentials, Mechanism};
-use super::error::Error;
 use super::extension::{ClientId, MailParameter, RcptParameter};
 use super::response::Response;
+use super::Error;
 use crate::Address;
 
 /// EHLO command

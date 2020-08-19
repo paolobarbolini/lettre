@@ -1,7 +1,5 @@
-use std::{
-    error::Error as StdError,
-    fmt::{self, Display, Formatter},
-};
+use std::error::Error as StdError;
+use std::fmt::{self, Display, Formatter};
 
 // FIXME message-specific errors
 /// Error type for email content

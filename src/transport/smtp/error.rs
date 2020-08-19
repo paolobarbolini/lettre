@@ -1,14 +1,15 @@
 //! Error and result type for SMTP clients
 
-use self::Error::*;
-use crate::transport::smtp::response::{Response, Severity};
-use base64::DecodeError;
 use std::{
     error::Error as StdError,
     fmt::{self, Display, Formatter},
     io,
     string::FromUtf8Error,
 };
+
+use self::Error::*;
+use crate::transport::smtp::response::{Response, Severity};
+use base64::DecodeError;
 
 /// An enum of all error kinds.
 #[derive(Debug)]

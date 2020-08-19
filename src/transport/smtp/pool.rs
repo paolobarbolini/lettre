@@ -1,5 +1,6 @@
-use crate::transport::smtp::{client::SmtpConnection, error::Error, SmtpClient};
 use r2d2::ManageConnection;
+
+use super::{client::SmtpConnection, Error, SmtpClient};
 
 impl ManageConnection for SmtpClient {
     type Connection = SmtpConnection;

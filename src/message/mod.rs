@@ -177,18 +177,6 @@
 //!
 //! ```
 
-pub use encoder::*;
-pub use mailbox::*;
-pub use mimebody::*;
-
-pub use mime;
-
-mod encoder;
-pub mod header;
-mod mailbox;
-mod mimebody;
-mod utf8_b;
-
 use std::convert::TryFrom;
 use std::time::SystemTime;
 
@@ -196,8 +184,21 @@ use uuid::Uuid;
 
 use crate::{
     message::header::{EmailDate, Header, Headers, MailboxesHeader},
-    Envelope, Error as EmailError,
+    Envelope,
 };
+
+pub use self::encoder::*;
+pub use self::error::Error;
+pub use self::mailbox::*;
+pub use self::mimebody::*;
+pub use mime;
+
+mod encoder;
+mod error;
+pub mod header;
+mod mailbox;
+mod mimebody;
+mod utf8_b;
 
 const DEFAULT_MESSAGE_ID_DOMAIN: &str = "localhost";
 
@@ -370,7 +371,7 @@ impl MessageBuilder {
     // TODO: High-level methods for attachments and embedded files
 
     /// Create message from body
-    fn build(self, body: Body) -> Result<Message, EmailError> {
+    fn build(self, body: Body) -> Result<Message, Error> {
         // Check for missing required headers
         // https://tools.ietf.org/html/rfc5322#section-3.6
 
@@ -386,11 +387,11 @@ impl MessageBuilder {
             Some(header::From(f)) => {
                 let from: Vec<Mailbox> = f.clone().into();
                 if from.len() > 1 && res.headers.get::<header::Sender>().is_none() {
-                    return Err(EmailError::TooManyFrom);
+                    return Err(Error::TooManyFrom);
                 }
             }
             None => {
-                return Err(EmailError::MissingFrom);
+                return Err(Error::MissingFrom);
             }
         }
 
@@ -410,26 +411,26 @@ impl MessageBuilder {
     /// Plain ASCII body
     ///
     /// *WARNING*: Generally not what you want
-    pub fn body<T: Into<String>>(self, body: T) -> Result<Message, EmailError> {
+    pub fn body<T: Into<String>>(self, body: T) -> Result<Message, Error> {
         // 998 chars by line
         // CR and LF MUST only occur together as CRLF; they MUST NOT appear
         //  independently in the body.
         let body = body.into();
 
         if !&body.is_ascii() {
-            return Err(EmailError::NonAsciiChars);
+            return Err(Error::NonAsciiChars);
         }
 
         self.build(Body::Raw(body))
     }
 
     /// Create message using mime body ([`MultiPart`][self::MultiPart])
-    pub fn multipart(self, part: MultiPart) -> Result<Message, EmailError> {
+    pub fn multipart(self, part: MultiPart) -> Result<Message, Error> {
         self.mime_1_0().build(Body::Mime(Part::Multi(part)))
     }
 
     /// Create message using mime body ([`SinglePart`][self::SinglePart])
-    pub fn singlepart(self, part: SinglePart) -> Result<Message, EmailError> {
+    pub fn singlepart(self, part: SinglePart) -> Result<Message, Error> {
         self.mime_1_0().build(Body::Mime(Part::Single(part)))
     }
 }

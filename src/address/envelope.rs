@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use crate::address::Address;
 use crate::message::header::{self, Headers};
-use crate::{Error, Mailbox, Mailboxes};
+use crate::message::{Error, Mailbox, Mailboxes};
 
 /// Simple email envelope representation
 ///

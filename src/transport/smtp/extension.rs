@@ -1,14 +1,13 @@
 //! ESMTP features
 
-use crate::transport::smtp::{
-    authentication::Mechanism, error::Error, response::Response, util::XText,
-};
 use std::{
     collections::HashSet,
     fmt::{self, Display, Formatter},
     net::{Ipv4Addr, Ipv6Addr},
     result::Result,
 };
+
+use super::{authentication::Mechanism, response::Response, util::XText, Error};
 
 /// Default client id
 const DEFAULT_DOMAIN_CLIENT_ID: &str = "localhost";
