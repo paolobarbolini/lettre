@@ -178,22 +178,19 @@
 
 use std::time::Duration;
 
-pub use self::transport::{SmtpClient, SmtpTransport, SmtpTransportBuilder};
+use self::authentication::{Credentials, Mechanism, DEFAULT_MECHANISMS};
 #[cfg(any(feature = "native-tls", feature = "rustls-tls"))]
-use crate::transport::smtp::client::TlsParameters;
-use crate::transport::smtp::{
-    authentication::{Credentials, Mechanism, DEFAULT_MECHANISMS},
-    client::SmtpConnection,
-    error::Error,
-    extension::ClientId,
-    response::Response,
-};
-use client::Tls;
+use self::client::TlsParameters;
+use self::client::{SmtpConnection, Tls};
+pub use self::error::Error;
+use self::extension::ClientId;
+use self::response::Response;
+pub use self::transport::{SmtpClient, SmtpTransport, SmtpTransportBuilder};
 
 pub mod authentication;
 pub mod client;
 pub mod commands;
-pub mod error;
+mod error;
 pub mod extension;
 #[cfg(feature = "r2d2")]
 pub mod pool;

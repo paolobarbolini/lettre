@@ -6,7 +6,7 @@
 //!
 //! The file transport writes the emails to the given directory. The name of the file will be
 //! `message_id.json`.
-//! It can be useful for testing purposes, or if you want to keep track of sent messages.
+//! It can be useful for testing purposes, or if you want to strkeep track of sent messages.
 //!
 //! ```rust
 //! # #[cfg(feature = "file-transport")]
@@ -35,20 +35,21 @@
 //! TODO
 //! ```
 
+use std::path::{Path, PathBuf};
+use std::str;
+
+use uuid::Uuid;
+
+pub use self::error::Error;
 #[cfg(feature = "async-std1")]
 use crate::AsyncStd1Transport;
 #[cfg(feature = "tokio02")]
 use crate::Tokio02Transport;
-use crate::{transport::file::error::Error, Envelope, Transport};
+use crate::{Envelope, Transport};
 #[cfg(any(feature = "async-std1", feature = "tokio02"))]
 use async_trait::async_trait;
-use std::{
-    path::{Path, PathBuf},
-    str,
-};
-use uuid::Uuid;
 
-pub mod error;
+mod error;
 
 type Id = String;
 

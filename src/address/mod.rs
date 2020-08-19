@@ -1,8 +1,5 @@
 //! Representation of an email address
 
-use idna::domain_to_ascii;
-use once_cell::sync::Lazy;
-use regex::Regex;
 use std::{
     convert::{TryFrom, TryInto},
     error::Error,
@@ -11,6 +8,14 @@ use std::{
     net::IpAddr,
     str::FromStr,
 };
+
+use idna::domain_to_ascii;
+use once_cell::sync::Lazy;
+use regex::Regex;
+
+pub use self::envelope::Envelope;
+
+mod envelope;
 
 /// Email address
 ///
@@ -128,7 +133,7 @@ impl FromStr for Address {
 
 impl AsRef<str> for Address {
     fn as_ref(&self) -> &str {
-        &self.complete.as_ref()
+        &self.complete
     }
 }
 
@@ -162,7 +167,7 @@ impl Display for AddressError {
 }
 
 #[cfg(feature = "serde")]
-pub mod serde {
+mod serde {
     use crate::address::Address;
     use serde::{
         de::{Deserializer, Error as DeError, MapAccess, Visitor},

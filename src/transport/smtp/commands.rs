@@ -1,20 +1,15 @@
 //! SMTP commands
 
-use crate::{
-    transport::smtp::{
-        authentication::{Credentials, Mechanism},
-        error::Error,
-        extension::{ClientId, MailParameter, RcptParameter},
-        response::Response,
-    },
-    Address,
-};
+use std::fmt::{self, Display, Formatter};
+
 #[cfg(feature = "log")]
 use log::debug;
-use std::{
-    convert::AsRef,
-    fmt::{self, Display, Formatter},
-};
+
+use super::authentication::{Credentials, Mechanism};
+use super::error::Error;
+use super::extension::{ClientId, MailParameter, RcptParameter};
+use super::response::Response;
+use crate::Address;
 
 /// EHLO command
 #[derive(PartialEq, Clone, Debug)]

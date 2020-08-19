@@ -189,12 +189,15 @@ mod mailbox;
 mod mimebody;
 mod utf8_b;
 
+use std::convert::TryFrom;
+use std::time::SystemTime;
+
+use uuid::Uuid;
+
 use crate::{
     message::header::{EmailDate, Header, Headers, MailboxesHeader},
     Envelope, Error as EmailError,
 };
-use std::{convert::TryFrom, time::SystemTime};
-use uuid::Uuid;
 
 const DEFAULT_MESSAGE_ID_DOMAIN: &str = "localhost";
 

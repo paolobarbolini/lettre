@@ -23,21 +23,20 @@
 //! # }
 //! ```
 
+use std::ffi::OsString;
+use std::io::Write;
+use std::process::{Command, Stdio};
+
+pub use self::error::Error;
 #[cfg(feature = "async-std1")]
 use crate::AsyncStd1Transport;
 #[cfg(feature = "tokio02")]
 use crate::Tokio02Transport;
-use crate::{transport::sendmail::error::Error, Envelope, Transport};
+use crate::{Envelope, Transport};
 #[cfg(any(feature = "async-std1", feature = "tokio02"))]
 use async_trait::async_trait;
-use std::{
-    convert::AsRef,
-    ffi::OsString,
-    io::prelude::*,
-    process::{Command, Stdio},
-};
 
-pub mod error;
+mod error;
 
 const DEFAUT_SENDMAIL: &str = "/usr/sbin/sendmail";
 

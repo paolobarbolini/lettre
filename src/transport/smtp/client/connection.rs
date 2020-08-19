@@ -9,11 +9,11 @@ use log::debug;
 use super::{ClientCodec, NetworkStream, TlsParameters};
 use crate::transport::smtp::authentication::{Credentials, Mechanism};
 use crate::transport::smtp::commands::*;
-use crate::transport::smtp::error::Error;
 use crate::transport::smtp::extension::{
     ClientId, Extension, MailBodyParameter, MailParameter, ServerInfo,
 };
 use crate::transport::smtp::response::{parse_response, Response};
+use crate::transport::smtp::Error;
 use crate::Envelope;
 
 #[cfg(feature = "log")]
