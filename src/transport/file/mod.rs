@@ -6,7 +6,7 @@
 //!
 //! The file transport writes the emails to the given directory. The name of the file will be
 //! `message_id.json`.
-//! It can be useful for testing purposes, or if you want to strkeep track of sent messages.
+//! It can be useful for testing purposes, or if you want to keep track of sent messages.
 //!
 //! ```rust
 //! # #[cfg(feature = "file-transport")]
