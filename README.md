@@ -63,7 +63,6 @@ lettre = "0.10.0-alpha.1"
 ```
 
 ```rust,no_run
-use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
 
 let email = Message::builder()
@@ -74,12 +73,10 @@ let email = Message::builder()
     .body("Be happy!")
     .unwrap();
 
-let creds = Credentials::new("smtp_username".to_string(), "smtp_password".to_string());
-
 // Open a remote connection to gmail
 let mailer = SmtpTransport::relay("smtp.gmail.com")
     .unwrap()
-    .credentials(creds)
+    .credentials(("smtp_username", "smtp_password"))
     .build();
 
 // Send the email

@@ -1,13 +1,11 @@
 //! Representation of an email address
 
-use std::{
-    convert::{TryFrom, TryInto},
-    error::Error,
-    ffi::OsStr,
-    fmt::{Display, Formatter, Result as FmtResult},
-    net::IpAddr,
-    str::FromStr,
-};
+use std::convert::{TryFrom, TryInto};
+use std::error::Error as StdError;
+use std::ffi::OsStr;
+use std::fmt::{Display, Formatter, Result as FmtResult};
+use std::net::IpAddr;
+use std::str::FromStr;
 
 use idna::domain_to_ascii;
 use once_cell::sync::Lazy;
@@ -152,7 +150,7 @@ pub enum AddressError {
     InvalidUtf8b,
 }
 
-impl Error for AddressError {}
+impl StdError for AddressError {}
 
 impl Display for AddressError {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {

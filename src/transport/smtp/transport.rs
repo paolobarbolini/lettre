@@ -103,8 +103,8 @@ impl SmtpTransportBuilder {
     }
 
     /// Set the authentication mechanism to use
-    pub fn credentials(mut self, credentials: Credentials) -> Self {
-        self.info.credentials = Some(credentials);
+    pub fn credentials<C: Into<Credentials>>(mut self, credentials: C) -> Self {
+        self.info.credentials = Some(credentials.into());
         self
     }
 
