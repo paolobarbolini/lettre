@@ -53,7 +53,7 @@ impl AsyncSmtpConnection {
     pub async fn connect_tokio02(
         hostname: &str,
         port: u16,
-        hello_name: &ClientId,
+        hello_name: ClientId,
         tls_parameters: Option<TlsParameters>,
     ) -> Result<AsyncSmtpConnection, Error> {
         let stream = AsyncNetworkStream::connect_tokio02(hostname, port, tls_parameters).await?;
@@ -62,7 +62,7 @@ impl AsyncSmtpConnection {
 
     async fn connect_impl(
         stream: AsyncNetworkStream,
-        hello_name: &ClientId,
+        hello_name: ClientId,
     ) -> Result<AsyncSmtpConnection, Error> {
         let stream = BufReader::new(stream);
         let mut conn = AsyncSmtpConnection {
@@ -122,7 +122,7 @@ impl AsyncSmtpConnection {
     pub async fn starttls(
         &mut self,
         tls_parameters: TlsParameters,
-        hello_name: &ClientId,
+        hello_name: ClientId,
     ) -> Result<(), Error> {
         if self.server_info.supports_feature(Extension::StartTls) {
             try_smtp!(self.command(Starttls).await, self);
@@ -141,8 +141,8 @@ impl AsyncSmtpConnection {
     }
 
     /// Send EHLO and update server info
-    async fn ehlo(&mut self, hello_name: &ClientId) -> Result<(), Error> {
-        let ehlo_response = try_smtp!(self.command(Ehlo::new(hello_name.clone())).await, self);
+    async fn ehlo(&mut self, hello_name: ClientId) -> Result<(), Error> {
+        let ehlo_response = try_smtp!(self.command(Ehlo::new(hello_name)).await, self);
         self.server_info = try_smtp!(ServerInfo::from_response(&ehlo_response), self);
         Ok(())
     }

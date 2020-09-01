@@ -158,7 +158,7 @@ where
         let mut conn = C::connect(
             &self.info.server,
             self.info.port,
-            &self.info.hello_name,
+            self.info.hello_name.clone(),
             &self.info.tls,
         )
         .await?;
@@ -175,7 +175,7 @@ pub trait AsyncSmtpConnector: Default + private::Sealed {
     async fn connect(
         hostname: &str,
         port: u16,
-        hello_name: &ClientId,
+        hello_name: ClientId,
         tls: &Tls,
     ) -> Result<AsyncSmtpConnection, Error>;
 }
@@ -190,7 +190,7 @@ impl AsyncSmtpConnector for Tokio02Connector {
     async fn connect(
         hostname: &str,
         port: u16,
-        hello_name: &ClientId,
+        hello_name: ClientId,
         tls: &Tls,
     ) -> Result<AsyncSmtpConnection, Error> {
         #[allow(clippy::match_single_binding)]
@@ -199,9 +199,13 @@ impl AsyncSmtpConnector for Tokio02Connector {
             Tls::Wrapper(ref tls_parameters) => Some(tls_parameters.clone()),
             _ => None,
         };
-        let mut conn =
-            AsyncSmtpConnection::connect_tokio02(hostname, port, hello_name, tls_parameters)
-                .await?;
+        let mut conn = AsyncSmtpConnection::connect_tokio02(
+            hostname,
+            port,
+            hello_name.clone(),
+            tls_parameters,
+        )
+        .await?;
 
         #[cfg(any(feature = "tokio02-native-tls", feature = "tokio02-rustls-tls"))]
         match tls {

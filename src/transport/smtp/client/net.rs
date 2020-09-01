@@ -1,5 +1,3 @@
-#[cfg(feature = "rustls-tls")]
-use std::sync::Arc;
 use std::{
     io::{self, Read, Write},
     net::{Ipv4Addr, Shutdown, SocketAddr, SocketAddrV4, TcpStream, ToSocketAddrs},
@@ -145,10 +143,7 @@ impl NetworkStream {
                 use webpki::DNSNameRef;
 
                 let domain = DNSNameRef::try_from_ascii_str(tls_parameters.domain())?;
-                let stream = StreamOwned::new(
-                    ClientSession::new(&Arc::new(connector.clone()), domain),
-                    tcp_stream,
-                );
+                let stream = StreamOwned::new(ClientSession::new(&connector, domain), tcp_stream);
 
                 InnerNetworkStream::RustlsTls(Box::new(stream))
             }

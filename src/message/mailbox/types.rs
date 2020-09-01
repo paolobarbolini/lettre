@@ -129,6 +129,14 @@ impl Mailboxes {
         self.into()
     }
 
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
     /// Iterate over mailboxes
     pub fn iter(&self) -> Iter<Mailbox> {
         self.0.iter()

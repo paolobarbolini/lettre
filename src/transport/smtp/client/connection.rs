@@ -56,7 +56,7 @@ impl SmtpConnection {
     pub fn connect<A: ToSocketAddrs>(
         server: A,
         timeout: Option<Duration>,
-        hello_name: &ClientId,
+        hello_name: ClientId,
         tls_parameters: Option<&TlsParameters>,
     ) -> Result<SmtpConnection, Error> {
         let stream = NetworkStream::connect(server, timeout, tls_parameters)?;
@@ -125,7 +125,7 @@ impl SmtpConnection {
                 #[cfg(feature = "tracing")]
                 tracing::debug!("connection encrypted");
                 // Send EHLO again
-                try_smtp!(self.ehlo(hello_name), self);
+                try_smtp!(self.ehlo(hello_name.clone()), self);
                 Ok(())
             }
             #[cfg(not(any(feature = "native-tls", feature = "rustls-tls")))]
@@ -138,8 +138,8 @@ impl SmtpConnection {
     }
 
     /// Send EHLO and update server info
-    fn ehlo(&mut self, hello_name: &ClientId) -> Result<(), Error> {
-        let ehlo_response = try_smtp!(self.command(Ehlo::new(hello_name.clone())), self);
+    fn ehlo(&mut self, hello_name: ClientId) -> Result<(), Error> {
+        let ehlo_response = try_smtp!(self.command(Ehlo::new(hello_name)), self);
         self.server_info = try_smtp!(ServerInfo::from_response(&ehlo_response), self);
         Ok(())
     }

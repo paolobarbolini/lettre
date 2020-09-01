@@ -98,21 +98,20 @@ impl Envelope {
     }
 }
 
-impl TryFrom<&Headers> for Envelope {
+impl TryFrom<Headers> for Envelope {
     type Error = Error;
 
-    fn try_from(headers: &Headers) -> Result<Self, Self::Error> {
-        let from = match headers.get::<header::Sender>() {
+    fn try_from(mut headers: Headers) -> Result<Self, Self::Error> {
+        let from = match headers.remove::<header::Sender>() {
             // If there is a Sender, use it
-            Some(header::Sender(a)) => Some(a.email.clone()),
+            Some(header::Sender(a)) => Some(a.email),
             // ... else try From
-            None => match headers.get::<header::From>() {
-                Some(header::From(a)) => {
-                    let from: Vec<Mailbox> = a.clone().into();
+            None => match headers.remove::<header::From>() {
+                Some(header::From(from)) => {
                     if from.len() > 1 {
                         return Err(Error::TooManyFrom);
                     }
-                    Some(from[0].email.clone())
+                    Some(from.into_iter().next().unwrap().email)
                 }
                 None => None,
             },
@@ -120,18 +119,18 @@ impl TryFrom<&Headers> for Envelope {
 
         fn add_addresses_from_mailboxes(
             addresses: &mut Vec<Address>,
-            mailboxes: Option<&Mailboxes>,
+            mailboxes: Option<Mailboxes>,
         ) {
             if let Some(mailboxes) = mailboxes {
-                for mailbox in mailboxes.iter() {
-                    addresses.push(mailbox.email.clone());
+                for mailbox in mailboxes.into_iter() {
+                    addresses.push(mailbox.email);
                 }
             }
         }
         let mut to = vec![];
-        add_addresses_from_mailboxes(&mut to, headers.get::<header::To>().map(|h| &h.0));
-        add_addresses_from_mailboxes(&mut to, headers.get::<header::Cc>().map(|h| &h.0));
-        add_addresses_from_mailboxes(&mut to, headers.get::<header::Bcc>().map(|h| &h.0));
+        add_addresses_from_mailboxes(&mut to, headers.remove::<header::To>().map(|h| h.0));
+        add_addresses_from_mailboxes(&mut to, headers.remove::<header::Cc>().map(|h| h.0));
+        add_addresses_from_mailboxes(&mut to, headers.remove::<header::Bcc>().map(|h| h.0));
 
         Self::new(from, to)
     }
@@ -209,7 +208,7 @@ mod test {
         headers.set(header::To(to));
 
         assert_eq!(
-            Envelope::try_from(&headers).unwrap(),
+            Envelope::try_from(headers).unwrap(),
             Envelope::new(
                 Some(Address::new("kayo", "example.com").unwrap()),
                 vec![Address::new("amousset", "example.com").unwrap()]
@@ -230,7 +229,7 @@ mod test {
         headers.set(header::To(to));
 
         assert_eq!(
-            Envelope::try_from(&headers).unwrap(),
+            Envelope::try_from(headers).unwrap(),
             Envelope::new(
                 Some(Address::new("kayo2", "example.com").unwrap()),
                 vec![Address::new("amousset", "example.com").unwrap()]
@@ -248,6 +247,6 @@ mod test {
         headers.set(header::From(from));
         headers.set(header::Sender(sender));
 
-        assert!(Envelope::try_from(&headers).is_err(),);
+        assert!(Envelope::try_from(headers).is_err(),);
     }
 }

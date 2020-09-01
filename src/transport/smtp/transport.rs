@@ -178,7 +178,7 @@ impl SmtpClient {
         let mut conn = SmtpConnection::connect::<(&str, u16)>(
             (self.info.server.as_ref(), self.info.port),
             self.info.timeout,
-            &self.info.hello_name,
+            self.info.hello_name.clone(),
             tls_parameters,
         )?;
 

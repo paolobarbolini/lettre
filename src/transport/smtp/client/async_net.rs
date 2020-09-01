@@ -1,7 +1,5 @@
 use std::net::{Shutdown, SocketAddr};
 use std::pin::Pin;
-#[cfg(feature = "tokio02-rustls-tls")]
-use std::sync::Arc;
 use std::task::{Context, Poll};
 
 use futures_io::{Error as IoError, ErrorKind, Result as IoResult};
@@ -164,7 +162,7 @@ impl AsyncNetworkStream {
 
                     let domain = DNSNameRef::try_from_ascii_str(&domain)?;
 
-                    let connector = TlsConnector::from(Arc::new(config));
+                    let connector = TlsConnector::from(config);
                     let stream = connector.connect(domain, tcp_stream).await?;
                     Ok(InnerAsyncNetworkStream::Tokio02RustlsTls(Box::new(stream)))
                 };
