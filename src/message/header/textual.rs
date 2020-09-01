@@ -1,9 +1,5 @@
+use super::{Error, Header, HeaderName, HeaderValue};
 use crate::message::utf8_b;
-use hyperx::{
-    header::{Formatter as HeaderFormatter, Header, RawLike},
-    Error as HeaderError, Result as HyperResult,
-};
-use std::{fmt::Result as FmtResult, str::from_utf8};
 
 macro_rules! text_header {
     ( $type_name: ident, $header_name: expr ) => {
@@ -11,23 +7,27 @@ macro_rules! text_header {
         pub struct $type_name(pub String);
 
         impl Header for $type_name {
-            fn header_name() -> &'static str {
-                $header_name
+            fn name() -> &'static HeaderName {
+                let name = HeaderName::from_static($header_name);
+                &name
             }
 
-            fn parse_header<'a, T>(raw: &'a T) -> HyperResult<$type_name>
-            where
-                T: RawLike<'a>,
-                Self: Sized,
-            {
-                raw.one()
-                    .ok_or(HeaderError::Header)
-                    .and_then(parse_text)
+            fn decode<'i, I: Iterator<Item = &'i HeaderValue>>(
+                values: &mut I,
+            ) -> Result<Self, Error> {
+                values
+                    .next()
+                    .and_then(|v| v.to_str().ok())
+                    .and_then(utf8_b::decode)
                     .map($type_name)
+                    .ok_or_else(Error::invalid)
             }
 
-            fn fmt_header(&self, f: &mut HeaderFormatter) -> FmtResult {
-                fmt_text(&self.0, f)
+            fn encode<E: Extend<HeaderValue>>(&self, values: &mut E) {
+                let value = utf8_b::encode(&self.0)
+                    .parse()
+                    .expect("HeaderValue is always valid");
+                values.extend(std::iter::once(value));
             }
         }
     };
@@ -39,20 +39,6 @@ text_header!(Keywords, "Keywords");
 text_header!(InReplyTo, "In-Reply-To");
 text_header!(References, "References");
 text_header!(MessageId, "Message-Id");
-text_header!(UserAgent, "User-Agent");
-
-fn parse_text(raw: &[u8]) -> HyperResult<String> {
-    if let Ok(src) = from_utf8(raw) {
-        if let Some(txt) = utf8_b::decode(src) {
-            return Ok(txt);
-        }
-    }
-    Err(HeaderError::Header)
-}
-
-fn fmt_text(s: &str, f: &mut HeaderFormatter) -> FmtResult {
-    f.fmt_line(&utf8_b::encode(s))
-}
 
 #[cfg(test)]
 mod test {

@@ -167,7 +167,7 @@ impl EmailFormat for SinglePart {
         out.extend_from_slice(b"\r\n");
 
         let encoding = self.headers.get::<ContentTransferEncoding>();
-        let mut encoder = codec(encoding);
+        let mut encoder = codec(encoding.as_ref());
 
         out.extend_from_slice(&encoder.encode(&self.body));
         out.extend_from_slice(b"\r\n");
@@ -236,6 +236,7 @@ impl MultiPartKind {
 
     fn from_mime(m: &Mime) -> Option<Self> {
         use self::MultiPartKind::*;
+
         match m.subtype().as_ref() {
             "mixed" => Some(Mixed),
             "alternative" => Some(Alternative),
@@ -283,17 +284,18 @@ impl MultiPartBuilder {
 
     /// Set `Content-Type` header using [`MultiPartKind`]
     pub fn kind(self, kind: MultiPartKind) -> Self {
-        self.header(ContentType(kind.into()))
+        let mime: Mime = kind.into();
+        self.header(ContentType::from(mime))
     }
 
     /// Set custom boundary
     pub fn boundary<S: AsRef<str>>(self, boundary: S) -> Self {
         let kind = {
-            let mime = &self.headers.get::<ContentType>().unwrap().0;
-            MultiPartKind::from_mime(mime).unwrap()
+            let header = self.headers.get::<ContentType>().unwrap();
+            MultiPartKind::from_mime(&header.into()).unwrap()
         };
         let mime = kind.to_mime(Some(boundary.as_ref()));
-        self.header(ContentType(mime))
+        self.header(ContentType::from(mime))
     }
 
     /// Creates multipart without parts
@@ -395,7 +397,8 @@ impl MultiPart {
 
     /// Get the boundary of multipart contents
     pub fn boundary(&self) -> String {
-        let content_type = &self.headers.get::<ContentType>().unwrap().0;
+        let header = self.headers.get::<ContentType>().unwrap();
+        let content_type = Mime::from(header);
         content_type.get_param("boundary").unwrap().as_str().into()
     }
 

@@ -190,10 +190,10 @@ mod mimebody;
 mod utf8_b;
 
 use crate::{
-    message::header::{EmailDate, Header, Headers, MailboxesHeader},
+    message::header::{Header, Headers, MailboxesHeader},
     Envelope, Error as EmailError,
 };
-use std::{convert::TryFrom, time::SystemTime};
+use std::{convert::TryFrom, str::FromStr, time::SystemTime};
 use uuid::Uuid;
 
 const DEFAULT_MESSAGE_ID_DOMAIN: &str = "localhost";
@@ -227,19 +227,22 @@ impl MessageBuilder {
 
     /// Add mailbox to header
     pub fn mailbox<H: Header + MailboxesHeader>(mut self, header: H) -> Self {
-        if self.headers.has::<H>() {
-            self.headers.get_mut::<H>().unwrap().join_mailboxes(header);
-            self
-        } else {
-            self.header(header)
+        match self.headers.get_mut::<H>() {
+            Some(header) => {
+                header.join_mailboxes(header);
+            }
+            None => {
+                self.header(header);
+            }
         }
+        self
     }
 
     /// Add `Date` header to message
     ///
     /// Shortcut for `self.header(header::Date(date))`.
-    pub fn date(self, date: EmailDate) -> Self {
-        self.header(header::Date(date))
+    pub fn date(self, date: SystemTime) -> Self {
+        self.header(header::Date::from(date))
     }
 
     /// Set `Date` header using current date/time
@@ -354,8 +357,8 @@ impl MessageBuilder {
 
     /// Set [User-Agent
     /// header](https://tools.ietf.org/html/draft-melnikov-email-user-agent-004)
-    pub fn user_agent(self, id: String) -> Self {
-        self.header(header::UserAgent(id))
+    pub fn user_agent(self, id: &str) -> Self {
+        self.header(header::UserAgent::from_str(id).unwrap())
     }
 
     /// Force specific envelope (by default it is derived from headers)

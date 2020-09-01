@@ -1,10 +1,7 @@
-use hyperx::{
-    header::{Formatter as HeaderFormatter, Header, RawLike},
-    Error as HeaderError, Result as HyperResult,
-};
+use super::{Error, Header, HeaderName, HeaderValue};
 use std::{
     fmt::{Display, Formatter as FmtFormatter, Result as FmtResult},
-    str::{from_utf8, FromStr},
+    str::FromStr,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -52,27 +49,27 @@ impl FromStr for ContentTransferEncoding {
 }
 
 impl Header for ContentTransferEncoding {
-    fn header_name() -> &'static str {
-        "Content-Transfer-Encoding"
+    fn name() -> &'static HeaderName {
+        let name = HeaderName::from_static("Content-Transfer-Encoding");
+        &name
     }
 
-    // FIXME HeaderError->HeaderError, same for result
-    fn parse_header<'a, T>(raw: &'a T) -> HyperResult<Self>
-    where
-        T: RawLike<'a>,
-        Self: Sized,
-    {
-        raw.one()
-            .ok_or(HeaderError::Header)
-            .and_then(|r| from_utf8(r).map_err(|_| HeaderError::Header))
-            .and_then(|s| {
-                s.parse::<ContentTransferEncoding>()
-                    .map_err(|_| HeaderError::Header)
-            })
+    fn decode<'i, I: Iterator<Item = &'i HeaderValue>>(values: &mut I) -> Result<Self, Error> {
+        let s = values
+            .next()
+            .and_then(|v| v.to_str().ok())
+            .ok_or(|_| Error::invalid())?;
+
+        s.parse::<ContentTransferEncoding>()
+            .map_err(|_| Error::invalid())
     }
 
-    fn fmt_header(&self, f: &mut HeaderFormatter) -> FmtResult {
-        f.fmt_line(&format!("{}", self))
+    fn encode<E: Extend<HeaderValue>>(&self, values: &mut E) {
+        let value = self
+            .to_string()
+            .parse()
+            .expect("HeaderValue is always valid");
+        values.extend(std::iter::once(value));
     }
 }
 

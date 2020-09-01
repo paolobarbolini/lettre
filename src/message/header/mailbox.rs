@@ -1,12 +1,8 @@
+use super::{Error, Header, HeaderName, HeaderValue};
 use crate::message::{
     mailbox::{Mailbox, Mailboxes},
     utf8_b,
 };
-use hyperx::{
-    header::{Formatter as HeaderFormatter, Header, RawLike},
-    Error as HeaderError, Result as HyperResult,
-};
-use std::{fmt::Result as FmtResult, slice::Iter, str::from_utf8};
 
 /// Header which can contains multiple mailboxes
 pub trait MailboxesHeader {
@@ -20,23 +16,29 @@ macro_rules! mailbox_header {
         pub struct $type_name(pub Mailbox);
 
         impl Header for $type_name {
-            fn header_name() -> &'static str {
-                $header_name
+            fn name() -> &'static HeaderName {
+                let name = HeaderName::from_static($header_name);
+                &name
             }
 
-            fn parse_header<'a, T>(raw: &'a T) -> HyperResult<Self> where
-    T: RawLike<'a>,
-    Self: Sized {
-                raw.one()
-                    .ok_or(HeaderError::Header)
-                    .and_then(parse_mailboxes)
+            fn decode<'i, I: Iterator<Item = &'i HeaderValue>>(
+                values: &mut I,
+            ) -> Result<Self, Error> {
+                values
+                    .next()
+                    .and_then(|v| v.to_str().ok())
+                    .and_then(|s|Mailboxes::parse(s).ok())
                     .and_then(|mbs| {
-                        mbs.into_single().ok_or(HeaderError::Header)
+                        mbs.into_single().ok_or_else(||Error::invalid())
                     }).map($type_name)
+                    .ok_or_else(||Error::invalid())
             }
 
-            fn fmt_header(&self, f: &mut HeaderFormatter) -> FmtResult {
-                f.fmt_line(&self.0.recode_name(utf8_b::encode))
+            fn encode<E: Extend<HeaderValue>>(&self, values: &mut E) {
+                let value = self.0.recode_name(utf8_b::encode).to_string()
+                    .parse()
+                    .expect("HeaderValue is always valid");
+                values.extend(std::iter::once(value));
             }
         }
     };
@@ -55,23 +57,32 @@ macro_rules! mailboxes_header {
         }
 
         impl Header for $type_name {
-            fn header_name() -> &'static str {
-                $header_name
+            fn name() -> &'static HeaderName {
+                let name = HeaderName::from_static($header_name);
+                &name
             }
 
-            fn parse_header<'a, T>(raw: &'a T) -> HyperResult<$type_name>
-            where
-                T: RawLike<'a>,
-                Self: Sized,
-            {
-                raw.one()
-                    .ok_or(HeaderError::Header)
-                    .and_then(parse_mailboxes)
-                    .map($type_name)
+            fn decode<'i, I: Iterator<Item = &'i HeaderValue>>(
+                values: &mut I,
+            ) -> Result<Self, Error> {
+                values
+                    .next()
+                    .and_then(|v| v.to_str().ok())
+                    .and_then(Ma)
+                    .ok_or_else(||Error::invalid())
             }
 
-            fn fmt_header(&self, f: &mut HeaderFormatter) -> FmtResult {
-                format_mailboxes(self.0.iter(), f)
+            fn encode<E: Extend<HeaderValue>>(&self, values: &mut E) {
+                let mailboxes = Mailboxes::from(
+                    self.0.iter().map(|mb| mb.recode_name(utf8_b::encode))
+                        .collect::<Vec<_>>(),
+                );
+
+                let value = mailboxes
+                    .to_string()
+                    .parse()
+                    .expect("HeaderValue is always valid");
+                values.extend(std::iter::once(value));
             }
         }
     };
@@ -144,22 +155,6 @@ mailboxes_header! {
 
      */
     (Bcc, "Bcc")
-}
-
-fn parse_mailboxes(raw: &[u8]) -> HyperResult<Mailboxes> {
-    if let Ok(src) = from_utf8(raw) {
-        if let Ok(mbs) = src.parse() {
-            return Ok(mbs);
-        }
-    }
-    Err(HeaderError::Header)
-}
-
-fn format_mailboxes<'a>(mbs: Iter<'a, Mailbox>, f: &mut HeaderFormatter) -> FmtResult {
-    f.fmt_line(&Mailboxes::from(
-        mbs.map(|mb| mb.recode_name(utf8_b::encode))
-            .collect::<Vec<_>>(),
-    ))
 }
 
 #[cfg(test)]

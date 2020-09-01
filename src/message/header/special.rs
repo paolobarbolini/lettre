@@ -1,8 +1,6 @@
-use hyperx::{
-    header::{Formatter as HeaderFormatter, Header, RawLike},
-    Error as HeaderError, Result as HyperResult,
-};
-use std::{fmt::Result as FmtResult, str::from_utf8};
+use std::fmt::{self, Display, Formatter};
+
+use super::{Error, Header, HeaderName, HeaderValue};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct MimeVersion {
@@ -18,6 +16,12 @@ impl MimeVersion {
     }
 }
 
+impl Display for MimeVersion {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}.{}", self.major, self.minor)
+    }
+}
+
 impl Default for MimeVersion {
     fn default() -> Self {
         MIME_VERSION_1_0
@@ -25,28 +29,32 @@ impl Default for MimeVersion {
 }
 
 impl Header for MimeVersion {
-    fn header_name() -> &'static str {
-        "MIME-Version"
+    fn name() -> &'static HeaderName {
+        let name = HeaderName::from_static("MIME-Version");
+        &name
     }
 
-    fn parse_header<'a, T>(raw: &'a T) -> HyperResult<Self>
-    where
-        T: RawLike<'a>,
-        Self: Sized,
-    {
-        raw.one().ok_or(HeaderError::Header).and_then(|r| {
-            let mut s = from_utf8(r).map_err(|_| HeaderError::Header)?.split('.');
+    fn decode<'i, I: Iterator<Item = &'i HeaderValue>>(values: &mut I) -> Result<Self, Error> {
+        let s = values
+            .next()
+            .and_then(|v| v.to_str().ok())
+            .ok_or_else(|| Error::invalid())?;
 
-            let major = s.next().ok_or(HeaderError::Header)?;
-            let minor = s.next().ok_or(HeaderError::Header)?;
-            let major = major.parse().map_err(|_| HeaderError::Header)?;
-            let minor = minor.parse().map_err(|_| HeaderError::Header)?;
-            Ok(MimeVersion::new(major, minor))
-        })
+        let mut split = s.split('.');
+
+        let major = split.next().ok_or_else(|| Error::invalid())?;
+        let minor = split.next().ok_or_else(|| Error::invalid())?;
+        let major = major.parse().map_err(|_| Error::invalid())?;
+        let minor = minor.parse().map_err(|_| Error::invalid())?;
+        Ok(MimeVersion::new(major, minor))
     }
 
-    fn fmt_header(&self, f: &mut HeaderFormatter) -> FmtResult {
-        f.fmt_line(&format!("{}.{}", self.major, self.minor))
+    fn encode<E: Extend<HeaderValue>>(&self, values: &mut E) {
+        let value = self
+            .to_string()
+            .parse()
+            .expect("HeaderValue is always valid");
+        values.extend(std::iter::once(value));
     }
 }
 
